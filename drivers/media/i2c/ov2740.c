@@ -1485,12 +1485,18 @@ static int ov2740_parse_power(struct ov2740 *ov2740)
 	long ret;
 
 	ov2740->reset_gpio =
-		devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
+		devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ov2740->reset_gpio)) {
 		ret = PTR_ERR(ov2740->reset_gpio);
 		dev_err(dev, "error while getting reset gpio: %ld\n", ret);
 		ov2740->reset_gpio = NULL;
 		return (int)ret;
+	} else if (ov2740->reset_gpio) {
+		/*
+		 * Ensure reset is asserted for at least 20 ms before
+		 * ov2740_power_on() deasserts it.
+		 */
+		msleep(20);
 	}
 
 	ov2740->clk = devm_clk_get_optional(dev, "clk");
